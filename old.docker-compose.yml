@@ -1,0 +1,29 @@
+version: '3.6'
+
+services:
+  proxy:
+     image: nginx:alpine
+     ports:
+       - "80:80"
+     volumes:
+       - ./proxy/create.conf:/etc/nginx/nginx.conf
+     restart: always
+     container_name: 'proxy'
+     links:
+       - jenkins:jenkins
+
+  jenkins:
+    build:
+      context: jenkins/
+      dockerfile: Dockerfile
+    container_name: jenkins
+    labels:
+      kompose.service.type: nodeport
+    restart: always
+    ports:
+      - 8080:8080/tcp
+      - "50000:50000"
+    volumes:
+      - './data:/jenkins_config'
+      - '/home/jenkins/jenkins_home:/var/jenkins_home'
+      - '/var/run/docker.sock:/var/run/docker.sock'

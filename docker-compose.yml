@@ -1,0 +1,35 @@
+version: '3.6'
+
+services:
+  proxy:
+     image: nginx:alpine
+     ports:
+       - "80:80"
+       - "443:443"
+     volumes:
+       - ./proxy/default.conf:/etc/nginx/nginx.conf
+       - ./proxy/dh-param/dhparam-2048.pem:/etc/ssl/certs/dhparam-2048.pem
+       - /docker-volumes/etc/letsencrypt/live/{domain.web}/fullchain.pem:/etc/letsencrypt/live/{domain.web}/fullchain.pem
+       - /docker-volumes/etc/letsencrypt/live/{domain.web}/privkey.pem:/etc/letsencrypt/live/{domain.web}/privkey.pem
+       - /docker-volumes/etc/letsencrypt/live/{domain.web}/chain.pem:/etc/letsencrypt/live/{domain.web}/chain.pem
+       - /usr/share/nginx/html:/usr/share/nginx/html
+     restart: always
+     container_name: 'proxy'
+     links:
+       - jenkins:jenkins
+
+  jenkins:
+    build:
+      context: jenkins/
+      dockerfile: Dockerfile
+    container_name: jenkins
+    labels:
+      kompose.service.type: nodeport
+    restart: always
+    ports:
+      - 8080:8080/tcp
+      - "50000:50000"
+    volumes:
+      - './data:/jenkins_config'
+      - '/home/jenkins/jenkins_home:/var/jenkins_home'
+      - '/var/run/docker.sock:/var/run/docker.sock'
